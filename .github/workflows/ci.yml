@@ -22,10 +22,13 @@ jobs:
           python-version: "3.12"
 
       - name: Installer les dépendances
-        run: pip install -r requirements.txt
+        run: python -m pip install -r requirements.txt
 
       - name: Démarrer l’API et vérifier /health
         run: |
-          flask --app app run --host=127.0.0.1 --port=8080 &
-          sleep 3
-          curl --fail http://127.0.0.1:8080/health
+          python -m flask --app app run --host=127.0.0.1 --port=8080 > flask.log 2>&1 &
+          FLASK_PID=$!
+          sleep 5
+          cat flask.log
+          curl --retry 5 --retry-connrefused --retry-delay 1 --fail http://127.0.0.1:8080/health
+          kill $FLASK_PID
